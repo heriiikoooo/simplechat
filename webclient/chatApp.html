@@ -1,0 +1,307 @@
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+
+    <!--Custom CSS-->
+    <link rel="stylesheet" type="text/css" href="css/style.css">
+
+    <!--fontawesome-->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.3.1/css/all.css" integrity="sha384-mzrmE5qonljUremFsqc01SB46JvROS7bZs3IO2EmfFsd15uHvIt+Y8vEf7N7fWAU" crossorigin="anonymous">
+    
+    <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
+
+    <title>Simple Chat Application!</title>
+
+  </head>
+    <body>
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-2"></div>
+                <div class="col-sm-8">
+                    <h1 class="mt-3">Chatap</h1>
+                    <!--Chat App-->
+                    <form name="myform" id="chat" class="mt-2">
+                        <h3>
+                            <b><span id="setclientname" class="text-secondary">client name not set </span></b>  
+                            <span id="stats">
+                                <!--<i class="fas fa-circle"></i>-->
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="customSwitches" onclick="myswitch()">
+                                    <label class="custom-control-label" for="customSwitches"></label>
+                                    <span id="conn">connected</span>
+                                    <span id="disconn">disconnected</span>
+                                </div>
+                            </span>
+                        </h3>
+
+                        <hr>
+                        <textarea disabled class="chatfield" name="outputtext" id="messageText" rows="10"></textarea>
+                        <br><br>
+                        <textarea name="inputtext" id="inputText" onkeyup="stoppedTyping()" placeholder="Write message..."></textarea> <input disabled class="btn btn-danger" type="button" id="sendBTN" name=sendButton value="Send" onClick="sendText();">
+                        <br><br>
+                        <textarea disabled class="chatfield" name="url"></textarea>
+                        <br> <br>
+                        <input type="button" class="btn btn-dark" name=clearButton value="Clear" onClick="clearText();">
+
+                        <input type="button" class="btn btn-danger" name=disconnectButton value="Disconnect" onClick="doDisconnect();">
+                        
+                        <input type="button" class="btn btn-primary" name=connectButton value="Connect" id="connect" onClick="doConnect();">
+                     </form>
+                </div>
+            </div>
+        </div>
+
+
+        <script language="javascript" type="text/javascript">
+            //disable the send button if message.is empty
+
+            function myswitch(){
+                var myswitches = document.getElementById("customSwitches").checked;
+
+                if(myswitches == true){
+                    doConnect();
+                }
+                else{
+                    doDisconnect();
+                }
+            }
+
+            
+            function stoppedTyping(){
+                var checkMessages =  document.getElementById("inputText").value;
+
+                var CM = checkMessages.trim()
+                if (CM == "") {
+                    document.getElementById('sendBTN').disabled = true;
+                    document.getElementById('sendBTN').className = "btn btn-danger";
+                    return false;
+                }
+                else{
+                    document.getElementById('sendBTN').disabled = false;
+                    document.getElementById('sendBTN').className = "btn btn-primary";
+
+                    //set the enter key to message
+                    inputText.addEventListener("keydown", function(event) {
+                    if (event.keyCode === 13) {
+                        //event.preventDefault();
+                        document.getElementById("sendBTN").click();
+                       }
+                    });
+                }
+            }
+            
+
+            function init(){
+                document.myform.url.value = "ws://localhost:8004"
+                document.myform.inputtext.value = ""
+                document.myform.disconnectButton.disabled = true;
+            }
+
+          
+            function doConnect(){
+                websocket = new WebSocket(document.myform.url.value);
+                websocket.onopen = function(evt) { onOpen(evt) };
+                websocket.onclose = function(evt) { onClose(evt) };
+                websocket.onmessage = function(evt) { onMessage(evt) };
+                websocket.onerror = function(evt) { onError(evt) };
+            }
+          
+
+            function onOpen(evt){
+                swal({
+                    title: "Success!",
+                    text: "You are now Successfully connected to the chat!",
+                    icon: "success",
+                    timer: 1000
+                  });
+
+                    onOpenProperty();
+                
+            }
+            function onOpenProperty(evt){
+                document.getElementById('disconn').style.display="none";
+                document.getElementById('conn').style.display="inline-block";
+                document.getElementById('stats').style.color="green";
+                // writeToScreen("connected\n");
+                document.getElementById('connect').style.backgroundColor="green";
+                document.getElementById('connect').style.color="Black";
+                document.getElementById('connect').value="Connected";
+                document.myform.connectButton.disabled = true;
+                document.myform.disconnectButton.disabled = false;
+                document.getElementById("customSwitches").checked = true;
+                //document.myform.inputtext.disabled = false;
+                document.getElementById('inputText').focus()
+            }
+
+          
+            function onClose(evt){
+                swal({
+                    title: "Notice!",
+                    text: "You are now Disconnecting to the chat...",
+                    icon: "info",
+                    timer: 1500
+                  });
+                document.getElementById('disconn').style.display="inline-block";
+                document.getElementById('conn').style.display="none";   
+                document.getElementById('connect').style.backgroundColor="";
+                document.getElementById('connect').style.color="Black";
+                document.getElementById('stats').style.color="Grey";
+                document.getElementById('connect').value="Connect";
+                //writeToScreen("disconnected\n");
+                document.myform.connectButton.disabled = false;
+                document.myform.disconnectButton.disabled = true;
+                document.getElementById("customSwitches").checked = false;
+                //document.myform.inputtext.disabled = true;
+            }
+         
+            /*function onMessage(evt, message){
+                writeToScreen( evt.data + '\n');
+
+                //getting the command from the server 
+                var server_message = evt.data
+                if(server_message.includes('@ui setclientname')){
+                    var getName = server_message.replace("@ui setclientname", "");
+                    if (getName.trim().length == 0){
+                        alert("Please set a valid name!")
+                        pass;
+                    }
+                    else{
+                        setTimeout(function(){
+                            document.getElementById("setclientname").innerHTML = "@"+getName;
+                       },400);
+                    //alert("Client name succesfully changed to : " + getName);
+                    }
+                }
+            }*/
+
+
+            function onMessage(evt){
+                writeToScreen( evt.data + '\n');
+
+                // getting the command from the server
+                var server_message =  evt.data
+
+                if(server_message.includes('@')){
+                    var pos1 = server_message.indexOf('@')
+                    var pos2 = server_message.indexOf(' ')
+
+                    command_receiver = server_message.slice(pos1+1, pos2);
+
+                    if(command_receiver == "ui"){
+                        var server_message = server_message.substring(pos2+1)
+                        var pos3 = server_message.indexOf(' ')
+                        var command = server_message.slice(0, pos3)
+                        if(command == "setclientname"){
+                            var cname = server_message.substring(pos3+1)
+                                    if(cname != "server"){
+                                        document.getElementById('inputText').value="";
+                                        swal({
+                                            title: "Great!",
+                                            text: "Clientname successfully changed to "+cname,
+                                            icon: "success",
+                                            timer: 1300
+                                        });
+
+                                        setTimeout(function(){
+                                            document.getElementById("setclientname").innerHTML = "@"+cname;
+                                        },800);
+                                    }
+                                    else{
+                                        document.getElementById("messageText").value = " ";
+                                        swal({
+                                            title: "Opsss!",
+                                            text: "Invalid client name! \n 'server' cannot be use as your client name!",
+                                            icon: "error",
+                                            timer: 1700
+                                        }); 
+                                    }
+                        }
+                    }
+                }
+            }
+
+
+            function onError(evt) {
+                writeToScreen('error: ' + evt.data + '\n');
+                websocket.close();
+                document.myform.connectButton.disabled = false;
+                document.myform.disconnectButton.disabled = true;
+            }
+            
+
+            //clientname validation
+            function setclientname(message){
+                var getName = message.replace("@server setclientname", "");
+                if (getName.trim().length == 0){
+                    //swal("Oppss!", "Invalid client name!", "error");
+                    swal({
+                        title: "Opsss!",
+                        text: "Invalid client name!",
+                        icon: "error",
+                        timer: 3000
+                      });
+                    pass;
+                }
+            }
+
+            
+            function doSend(message){
+                var res = message.match(/setclientname/g);
+                if (message.match(/@server setclientname/g)){
+                    setclientname(message);
+                    writeToScreen("Me: " + message + '\n');
+                    websocket.send(message);
+               }
+               else{
+                writeToScreen("Me  :  " + message + '\n');
+                websocket.send(message);
+                swal({
+                    title: "Message sent!",
+                    //text: "I will close in 2 seconds.",
+                    icon: "success",
+                    timer: 790,
+                  });
+                }
+            }
+
+        
+            function writeToScreen(message) {
+                document.myform.outputtext.value += message
+                document.myform.outputtext.scrollTop = document.myform.outputtext.scrollHeight;
+            }
+          
+            window.addEventListener("load", init, false);
+          
+          
+            function sendText(){
+                doSend( document.myform.inputtext.value );
+                document.getElementById('inputText').value="";
+                document.getElementById('sendBTN').disabled = true;
+                document.getElementById('sendBTN').className = "btn btn-danger";
+            }
+          
+
+            function clearText() {
+                document.myform.outputtext.value = "";
+            }
+          
+
+            function doDisconnect() {
+                websocket.close();
+                
+            }
+          
+            
+                //window.onload= doConnect;
+            window.onload = function(){
+                doConnect();
+            }
+            
+          </script>
+    </body>
+</html>
